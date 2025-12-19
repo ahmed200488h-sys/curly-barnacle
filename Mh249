@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لعبة التلوين للأطفال</title>
+
+<style>
+    body {
+        text-align: center;
+        font-family: Arial;
+        background-color: #f0f8ff;
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    canvas {
+        border: 3px solid #000;
+        background-color: white;
+        touch-action: none;
+    }
+
+    .colors button {
+        width: 40px;
+        height: 40px;
+        margin: 5px;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🎨 لعبة التلوين</h1>
+<p>اختر لونًا وابدأ التلوين</p>
+
+<div class="colors">
+    <button style="background:red" onclick="setColor('red')"></button>
+    <button style="background:blue" onclick="setColor('blue')"></button>
+    <button style="background:green" onclick="setColor('green')"></button>
+    <button style="background:yellow" onclick="setColor('yellow')"></button>
+    <button style="background:black" onclick="setColor('black')"></button>
+</div>
+
+<br>
+
+<canvas id="canvas" width="300" height="300"></canvas>
+
+<br><br>
+<button onclick="clearCanvas()">🧹 مسح اللوحة</button>
+
+<script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let drawing = false;
+    let color = "black";
+
+    function setColor(newColor) {
+        color = newColor;
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mouseup", stopDraw);
+    canvas.addEventListener("mousemove", draw);
+
+    canvas.addEventListener("touchstart", startDraw);
+    canvas.addEventListener("touchend", stopDraw);
+    canvas.addEventListener("touchmove", drawTouch);
+
+    function startDraw(e) {
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(getX(e), getY(e));
+    }
+
+    function stopDraw() {
+        drawing = false;
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = color;
+
+        ctx.lineTo(getX(e), getY(e));
+        ctx.stroke();
+    }
+
+    function drawTouch(e) {
+        e.preventDefault();
+        draw(e.touches[0]);
+    }
+
+    function getX(e) {
+        return e.clientX - canvas.getBoundingClientRect().left;
+    }
+
+    function getY(e) {
+        return e.clientY - canvas.getBoundingClientRect().top;
+    }
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لعبة التلوين للأطفال</title>
+
+<style>
+    body {
+        text-align: center;
+        font-family: Arial;
+        background-color: #f0f8ff;
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    canvas {
+        border: 3px solid #000;
+        background-color: white;
+        touch-action: none;
+    }
+
+    .colors button {
+        width: 40px;
+        height: 40px;
+        margin: 5px;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>🎨 لعبة التلوين</h1>
+<p>اختر لونًا وابدأ التلوين</p>
+
+<div class="colors">
+    <button style="background:red" onclick="setColor('red')"></button>
+    <button style="background:blue" onclick="setColor('blue')"></button>
+    <button style="background:green" onclick="setColor('green')"></button>
+    <button style="background:yellow" onclick="setColor('yellow')"></button>
+    <button style="background:black" onclick="setColor('black')"></button>
+</div>
+
+<br>
+
+<canvas id="canvas" width="300" height="300"></canvas>
+
+<br><br>
+<button onclick="clearCanvas()">🧹 مسح اللوحة</button>
+
+<script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let drawing = false;
+    let color = "black";
+
+    function setColor(newColor) {
+        color = newColor;
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mouseup", stopDraw);
+    canvas.addEventListener("mousemove", draw);
+
+    canvas.addEventListener("touchstart", startDraw);
+    canvas.addEventListener("touchend", stopDraw);
+    canvas.addEventListener("touchmove", drawTouch);
+
+    function startDraw(e) {
+        drawing = true;
+        ctx.beginPath();
+        ctx.moveTo(getX(e), getY(e));
+    }
+
+    function stopDraw() {
+        drawing = false;
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = color;
+
+        ctx.lineTo(getX(e), getY(e));
+        ctx.stroke();
+    }
+
+    function drawTouch(e) {
+        e.preventDefault();
+        draw(e.touches[0]);
+    }
+
+    function getX(e) {
+        return e.clientX - canvas.getBoundingClientRect().left;
+    }
+
+    function getY(e) {
+        return e.clientY - canvas.getBou
