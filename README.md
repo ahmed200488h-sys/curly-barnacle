@@ -1,58 +1,118 @@
-# curly-barnacle
-تطبيق فحص رصيد توكن باستخدام Streamlit
-import streamlit as st
-from web3 import Web3
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
-st.set_page_config(page_title="فحص رصيد التوكن", layout="centered")
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const MyApp());
+}
 
-st.title("💰 فحص رصيد توكن ERC20")
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const HomePage(),
+    );
+  }
+}
 
-rpc_url = st.text_input(
-    "رابط الشبكة (Infura / Alchemy)",
-    "https://sepolia.infura.io/v3/PUT_YOUR_API_KEY_HERE"
-)
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
 
-token_address = st.text_input(
-    "عنوان عقد التوكن",
-    "0x0000000000000000000000000000000000000000"
-)
+class _HomePageState extends State<HomePage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  User? user;
+  GoogleMapController? mapController;
+  LatLng? currentPosition;
+  final Set<Marker> _markers = {};
 
-wallet_address = st.text_input(
-    "عنوان المحفظة",
-    "0x0000000000000000000000000000000000000000"
-)
+  @override
+  void initState() {
+    super.initState();
+    _auth.authStateChanges().listen((u) {
+      setState(() {
+        user = u;
+      });
+    });
+    _determinePosition();
+  }
 
-decimals = st.number_input("عدد المنازل العشرية للتوكن", value=6)
+  Future<void> _determinePosition() async {
+    LocationPermission permission;
+    permission = await Geolocator.requestPermission();
+    Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      currentPosition = LatLng(pos.latitude, pos.longitude);
+      _markers.add(Marker(
+        markerId: const MarkerId('current'),
+        position: currentPosition!,
+        infoWindow: const InfoWindow(title: 'مكاني الحالي'),
+      ));
+    });
+  }
 
-abi = [
-    {
-        "constant": True,
-        "inputs": [{"name": "_owner", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "balance", "type": "uint256"}],
-        "type": "function",
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('وصلناك - طلب سيارة'),
+        backgroundColor: Colors.blueAccent,
+        actions: [
+          if (user != null)
+            IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () async {
+                  await _auth.signOut();
+                })
+        ],
+      ),
+      body: currentPosition == null
+          ? const Center(child: CircularProgressIndicator())
+          : GoogleMap(
+              initialCameraPosition:
+                  CameraPosition(target: currentPosition!, zoom: 15),
+              markers: _markers,
+              onMapCreated: (controller) => mapController = controller,
+            ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.local_taxi),
+        onPressed: _requestRide,
+      ),
+    );
+  }
+
+  void _requestRide() async {
+    if (user == null) {
+      _showMessage('الرجاء تسجيل الدخول أولاً');
+      return;
     }
-]
+    if (currentPosition == null) return;
 
-if st.button("🔍 فحص الرصيد"):
-    try:
-        w3 = Web3(Web3.HTTPProvider(rpc_url))
+    await _db.collection('rides').add({
+      'userId': user!.uid,
+      'location': {
+        'lat': currentPosition!.latitude,
+        'lng': currentPosition!.longitude
+      },
+      'status': 'requested',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
 
-        if not w3.is_connected():
-            st.error("❌ فشل الاتصال بالشبكة")
-        else:
-            contract = w3.eth.contract(
-                address=Web3.to_checksum_address(token_address),
-                abi=abi
-            )
+    _showMessage('تم طلب السيارة بنجاح!');
+  }
 
-            balance = contract.functions.balanceOf(
-                Web3.to_checksum_address(wallet_address)
-            ).call()
-
-            human_balance = balance / (10 ** decimals)
-
-            st.success(f"✅ الرصيد: {human_balance}")
-
-    except Exception as e:
-        st.error(f"حدث خطأ: {e}")
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
