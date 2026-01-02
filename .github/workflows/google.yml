@@ -1,0 +1,104 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.guardianx.antitheft">
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <application
+        android:allowBackup="true"
+        android:label="GuardianX"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".TheftReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>
+package com.guardianx.antitheft
+
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var statusText: TextView
+    private lateinit var activateBtn: Button
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        statusText = findViewById(R.id.statusText)
+        activateBtn = findViewById(R.id.activateBtn)
+
+        checkPermissions()
+
+        activateBtn.setOnClickListener {
+            // تفعيل الحماية
+            AlarmService.startAlarm(this)
+            LocationService.sendLocation(this)
+            CameraService.captureImage(this)
+            statusText.text = "الحماية مفعلة 🔒"
+        }
+    }
+
+    private fun checkPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.READ_PHONE_STATE
+        )
+
+        val denied = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (denied.isNotEmpty()) {
+            requestPermissionsLauncher.launch(denied.toTypedArray())
+        }
+    }
+
+    private val requestPermissionsLauncher =
+  
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            val granted = results.all { it.value }
+            if (!granted) {
+                statusText.text = "يرجى إعطاء الأذونات لتشغيل التطبيق"
+            }
+        }
+      package com.guardianx.antitheft
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+
+class TheftReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        // عند إعادة تشغيل الهاتف أو اكتشاف تغيير الشريحة
+        AlarmService.startAlarm(context)
+        LocationService.sendLocation(context)
+        CameraService.captureImage(context)
+    }
+}
+}
